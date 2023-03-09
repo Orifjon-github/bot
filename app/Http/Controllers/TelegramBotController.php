@@ -17,16 +17,6 @@ class TelegramBotController extends Controller
         $text = $request->input('message.text');
         $chatId = $request->input('message.chat.id');
 
-        $message = 'Automatic membership approval is now disabled.';
-        $client = new Client(['base_uri' => $endpoint . $token . '/']);
-        $client->request('POST', 'sendMessage', [
-            'form_params' => [
-                'chat_id' => $chatId,
-                'text' => $message . $chatId . $text
-            ]
-        ]);
-        die();
-
         // Check if the message is the /auto command
         if ($text == '/auto') {
             // Call the Telegram API to set the chat member status to "approved"
