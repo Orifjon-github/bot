@@ -17,10 +17,4 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::post('/bot/webhook', 'TelegramBotController@handleWebhook');
-
-// Define the route for the /auto command
-Route::get('/bot/auto', 'TelegramBotController@enableAutoJoin');
-
-// Define the route for the /noauto command
-Route::get('/bot/noauto', 'TelegramBotController@disableAutoJoin');
+Route::post('/bot/webhook', [\App\Http\Controllers\TelegramBotController::class, 'handle']);
