@@ -18,6 +18,17 @@ class TelegramBotController extends Controller
         $chatId = $request->input('message.chat.id');
 
         // Check if the message is the /auto command
+
+        if ($text == '/start') {
+            $client = new Client(['base_uri' => $endpoint . $token . '/']);
+            $message = 'Test Working';
+            $client->request('POST', 'sendMessage', [
+                'form_params' => [
+                    'chat_id' => $chatId,
+                    'text' => $message
+                ]
+            ]);
+        }
         if ($text == '/auto') {
             // Call the Telegram API to set the chat member status to "approved"
             $client = new Client(['base_uri' => $endpoint . $token . '/']);
