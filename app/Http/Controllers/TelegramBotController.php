@@ -10,11 +10,22 @@ class TelegramBotController extends Controller
     public function handle(Request $request)
     {
         $endpoint = 'https://api.telegram.org/bot';
-        $token = '<YOUR_BOT_TOKEN>';
+        $token = '6137134311:AAESLLeHd4z3lhIXZcQrIQ51dqG3GaX4Clg';
 
         // Get the message text and chat ID from the request
         $text = $request->input('message.text');
         $chatId = $request->input('message.chat.id');
+
+        if ($text == '/start') {
+            // Call the Telegram API to get the list of chat administrators
+            $client = new Client(['base_uri' => $endpoint . $token . '/']);
+            $message = 'Test Working';
+            $client->request('POST', 'sendMessage', [
+                'form_params' => [
+                    'chat_id' => $chatId,
+                    'text' => $message
+                ]
+            ]);
 
         // Check if the message is the /auto command
         if ($text == '/auto') {
