@@ -30,39 +30,47 @@ class TelegramBotController extends Controller
 
         // Check if the message is the /auto command
         if ($text == '/auto') {
-            // Call the Telegram API to get the list of chat administrators
+            // Call the Telegram API to get the list of chat members
             $client = new Client(['base_uri' => $endpoint . $token . '/']);
             $response = $client->request('POST', 'getChatAdministrators', [
                 'form_params' => [
-                    'chat_id' => $chatId
+                    'chat_id' => $chatId,
                 ]
             ]);
 
-            // Loop through the list of chat administrators and get their user IDs
-            $admins = json_decode($response->getBody(), true)['result'];
-            $adminIds = array_map(function($admin) {
-                return $admin['user']['id'];
-            }, $admins);
+            // Get the list of chat admins and their user IDs
+            $admins = json_decode($response->getBody()->getContents(), true)['result'];
+            $adminIds = array_column($admins, 'user', 'status');
 
-            // Call the Telegram API to set the chat member status to "approved" for each administrator
-            foreach ($adminIds as $adminId) {
-                $client->request('POST', 'setChatMemberStatus', [
+            // Check if the bot is an admin of the channel
+            if (array_key_exists($chatId, $adminIds) && in_array($token, $adminIds)) {
+                // Call the Telegram API to set the chat member status to "approved"
+                $response = $client->request('POST', 'setChatMemberStatus', [
                     'form_params' => [
                         'chat_id' => $chatId,
-                        'user_id' => $adminId,
+                        'user_id' => $request->input('message.from.id'),
                         'status' => 'member'
                     ]
                 ]);
-            }
 
-            // Send a confirmation message to the chat
-            $message = 'Automatic membership approval is now enabled.';
-            $client->request('POST', 'sendMessage', [
-                'form_params' => [
-                    'chat_id' => $chatId,
-                    'text' => $message
-                ]
-            ]);
+                // Send a confirmation message to the chat
+                $message = 'Automatic membership approval is now enabled.';
+                $client->request('POST', 'sendMessage', [
+                    'form_params' => [
+                        'chat_id' => $chatId,
+                        'text' => $message
+                    ]
+                ]);
+            } else {
+                // Send an error message if the bot is not an admin of the channel
+                $message = 'Error: bot is not an admin of the channel.';
+                $client->request('POST', 'sendMessage', [
+                    'form_params' => [
+                        'chat_id' => $chatId,
+                        'text' => $message
+                    ]
+                ]);
+            }
         }
 
         // Check if the message is the /noauto command
