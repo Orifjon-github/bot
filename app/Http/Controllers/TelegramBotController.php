@@ -9,36 +9,39 @@ class TelegramBotController extends Controller
 {
     public function handle(Request $request)
     {
-        // Set the Telegram API endpoint and bot token
         $endpoint = 'https://api.telegram.org/bot';
-        $token = '6137134311:AAESLLeHd4z3lhIXZcQrIQ51dqG3GaX4Clg';
+        $token = '<YOUR_BOT_TOKEN>';
 
         // Get the message text and chat ID from the request
         $text = $request->input('message.text');
         $chatId = $request->input('message.chat.id');
 
         // Check if the message is the /auto command
-
-        if ($text == '/start') {
-            $client = new Client(['base_uri' => $endpoint . $token . '/']);
-            $message = 'Test Working';
-            $client->request('POST', 'sendMessage', [
-                'form_params' => [
-                    'chat_id' => $chatId,
-                    'text' => $message
-                ]
-            ]);
-        }
         if ($text == '/auto') {
-            // Call the Telegram API to set the chat member status to "approved"
+            // Call the Telegram API to get the list of chat administrators
             $client = new Client(['base_uri' => $endpoint . $token . '/']);
-            $response = $client->request('POST', 'setChatMemberStatus', [
+            $response = $client->request('POST', 'getChatAdministrators', [
                 'form_params' => [
-                    'chat_id' => $chatId,
-                    'user_id' => '298410462',
-                    'status' => 'member'
+                    'chat_id' => $chatId
                 ]
             ]);
+
+            // Loop through the list of chat administrators and get their user IDs
+            $admins = json_decode($response->getBody(), true)['result'];
+            $adminIds = array_map(function($admin) {
+                return $admin['user']['id'];
+            }, $admins);
+
+            // Call the Telegram API to set the chat member status to "approved" for each administrator
+            foreach ($adminIds as $adminId) {
+                $client->request('POST', 'setChatMemberStatus', [
+                    'form_params' => [
+                        'chat_id' => $chatId,
+                        'user_id' => $adminId,
+                        'status' => 'member'
+                    ]
+                ]);
+            }
 
             // Send a confirmation message to the chat
             $message = 'Automatic membership approval is now enabled.';
@@ -52,15 +55,16 @@ class TelegramBotController extends Controller
 
         // Check if the message is the /noauto command
         if ($text == '/noauto') {
-            // Call the Telegram API to set the chat member status to "restricted"
-            $client = new Client(['base_uri' => $endpoint . $token . '/']);
-            $response = $client->request('POST', 'setChatMemberStatus', [
-                'form_params' => [
-                    'chat_id' => $chatId,
-                    'user_id' => '298410462',
-                    'status' => 'restricted'
-                ]
-            ]);
+            // Call the Telegram API to set the chat member status to "restricted" for each administrator
+            foreach ($adminIds as $adminId) {
+                $client->request('POST', 'setChatMemberStatus', [
+                    'form_params' => [
+                        'chat_id' => $chatId,
+                        'user_id' => $adminId,
+                        'status' => 'restricted'
+                    ]
+                ]);
+            }
 
             // Send a confirmation message to the chat
             $message = 'Automatic membership approval is now disabled.';
