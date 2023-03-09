@@ -26,6 +26,7 @@ class TelegramBotController extends Controller
                     'text' => $message
                 ]
             ]);
+        }
 
         // Check if the message is the /auto command
         if ($text == '/auto') {
